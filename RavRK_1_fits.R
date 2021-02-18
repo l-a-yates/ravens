@@ -31,16 +31,15 @@ rm(list=ls())
 #-----
 # ravens data are the combined model matrices from (the default) linear quadrat schemes generated 
 #   for each route using spatstat's lppm (see RavRK_0_prepare.R)
-# Each row is a single quadrat in a given route for a given season 
-# y2: 0 or 1, raven observed in quadrat
-# w: weights = area of quadrat (proportional to quadrat length)
-# y1 = y2/w (intensity/rate = raven/metre in quadrat)
+# Each row is a single quadrat in a given route in a given season 
+# y2: 0 or 1, raven not-observed/observed in quadrat
+# w: weights = 'area' of quadrat (proportional to quadrat length)
+# y1 = y2/w (intensity/rate = observed raven/metre in quadrat)
 # O.dist (numerical covariate): distance to open farmland from quadrat (X_F)
 # RK.dist (numerical covariate): distance to roadkill from quadrat (X_R)
 # route (group factor): 8 routes where observations were made
 # season (group factor): 4 seasons, observations taken for each route in each season
 
-#ravens <- read_csv("data/ravens_2020_07_01.csv")
 ravens <- read_csv("data/ravens_2021_02_03.csv")
 
 # standardise numerical covariates O.dist and RK.dist
