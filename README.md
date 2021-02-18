@@ -6,6 +6,6 @@ The data are available from the accompanying repository [https://doi.org/10.6084
 
 
 ### Details  
-The series of six R scripts *RavRK_0_prepare.R*, etc. (see [directory](https://github.com/l-a-yates/ravens)) reproduce the full set of results for the manuscript. Some of the more time-consuming computations have been saved as R data objects in the folder 'results'. The scripts contains comments to facilitate the loading of these objects. Alternatively, the analyses can be re-run in their entirety. 
+The series of six R scripts *RavRK_0_prepare.R*, etc. (see [directory](https://github.com/l-a-yates/ravens)) reproduce the full set of results for the manuscript. Some of the more time-consuming computations have been saved as R data objects in the folder 'results'. The scripts contain comments to facilitate the loading of these objects. Alternatively, the analyses can be re-run in their entirety. 
 
-An R markdown document containing a **worked example** is also supplied here; the html output can be viewed directly at [https://l-a-yates.github.io/ravens/RavRK_example](https://l-a-yates.github.io/ravens/RavRK_example)
+An R markdown document containing a **worked example** is also supplied; the html output can be viewed directly at [https://l-a-yates.github.io/ravens/RavRK_example](https://l-a-yates.github.io/ravens/RavRK_example)
