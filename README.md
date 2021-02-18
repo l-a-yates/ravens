@@ -1,3 +1,6 @@
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4549778.svg)](https://doi.org/10.5281/zenodo.4549778)
+
 ### About
 
 This repository provides code to reproduce the analyses in the manuscript "Roadkill islands: carnivore extinction shifts seasonal use of roadside carrion by generalist avian scavenger" by Fielding, Matthew; Buettel, Jessie C; Brook, Barry; Stojanović, Dejan; Yates, Luke (2021). 
