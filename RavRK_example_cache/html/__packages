@@ -1,0 +1,16 @@
+base
+tidyverse
+ggplot2
+tibble
+tidyr
+readr
+purrr
+dplyr
+stringr
+forcats
+spatstat.data
+nlme
+rpart
+spatstat
+Rcpp
+rstanarm

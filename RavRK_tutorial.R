@@ -12,25 +12,26 @@
 
 library(spatstat)
 library(tidyverse)
-library(pbmcapply)
-library(ggpubr)
-library(broom)
+#library(pbmcapply)
+#library(ggpubr)
+#library(broom)
 library(rstanarm)
 
 rm(list=ls())
 
 # load data hyperframe (see RavRK_0_prepare.R)
-data <- readRDS("data/ravens_hyper_2021_02_03.rds")
-rownames(data) <- data$site
-
+data <- readRDS("data/ravens_KF_hyper.rds")
+data
+KF_linpp <- data$linpp[[1]]
+KF_linpp
 # choose a site and season
-site <- "K-F"
+#site <- "K-F"
 seas <- "spring"
 
 # subset the linear point pattern and extract/generate spatial covariates
-ravens_lpp <- subset.lpp(data$linpp[[site]], season == seas & type == "FR", select = F)
-roadkill_lpp <- subset.lpp(data$linpp[[site]], season == seas & type == "RK", select = F)
-X_F <- data$X_F[[site]]
+ravens_lpp <- subset.lpp(KF_linpp, season == seas & type == "FR", select = F)
+roadkill_lpp <- subset.lpp(KF_linpp, season == seas & type == "RK", select = F)
+X_F <- data$X_F[[1]]
 X_R <- as.linim(distfun.lpp(roadkill_lpp))
 
 # plots of raven observations and covariate images
