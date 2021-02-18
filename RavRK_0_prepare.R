@@ -1,5 +1,10 @@
 ##--------------------------------------------------------------------------------
 ##
+## Code to reproduce analyses from the manuscript:
+## “Roadkill islands: carnivore extinction shifts seasonal use of roadside carrion 
+## by generalist avian scavenger” by Fielding, Matthew; Buettel, Jessie C; Brook, 
+## Barry; Stojanović, Dejan; Yates, Luke (2021)
+##
 ## Prepare raven, roadkill and route data for 1D (linear) point-pattern analysis
 ##
 ## Create marked linear-point pattern (spatstat::lpp) objects
@@ -8,7 +13,7 @@
 ## Generate quadrature schemes and export the data file
 ##    ravens_.csv, used in the main analysis
 ##
-## See ... for data metadata
+## See https://doi.org/10.6084/m9.figshare.14036807.v1 for data metadata
 ##
 ## Author: Luke Yates
 ## Date created: 06/10/2020 (last edit 02/02/2021)

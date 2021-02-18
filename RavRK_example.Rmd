@@ -1,6 +1,6 @@
 ---
-title: "RavRK_example"
-author: "Luke Yates"
+title: "Ravens and Roadkill: example analysis"
+author: "Luke A. Yates, Matthew W. Fielding"
 date: "2/18/2021"
 output: html_document
 ---
@@ -9,22 +9,125 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r libraries, message = FALSE}
+library(tidyverse)
+library(spatstat)
+library(rstanarm)
+```
+## Introduction
+This page is part of a code repository (<https://github.com/l-a-yates/ravens>) to reproduce the analyses in the manuscript “Roadkill islands: carnivore extinction shifts seasonal use of roadside carrion by generalist avian scavenger” by Fielding, Matthew; Buettel, Jessie C; Brook, Barry; Stojanović, Dejan; Yates, Luke (2021). The data are available from the accompanying repository <https://doi.org/10.6084/m9.figshare.14036807.v1>.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Here we provide a simple worked example of the model-fitting process for Poisson point-process models. We make use of the package `spatstat` to generate a quadrature scheme using a small subset of the data from the manuscript. The scheme permits numerical approximation of the model likelihood using a generalised linear model (glm). We demonstrate model fitting and model comparison using both maximum-likelihood and Bayesian approaches. These approaches can be applied to other transect data and point patterns.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+## Load and prepare data   
+Load the data file, a `spatstat::hyperframe` object:
+```{r data, cache = T}
+data <- readRDS("data/ravens_KF_hyper.rds"); data
+```
+The hyperframe contains a linear point pattern object (`.lpp`) and the distance to farmland covariate image for the route K-F (see `RavRK_0_prepare.R` for data pre-processing). First, we extract linear point pattern:
+```{r, cache = T}
+KF_linpp <- data$linpp[[1]]; KF_linpp
+```
+and choose a season:
+```{r}
+seas <- "spring"
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+Next, we split the point pattern into raven observations and roadkill observations, and we define the two spatial covariates: `X_F` (distance to open farmland), `X_R` (distance to nearest roadkill):
+```{r}
+ravens_lpp <- subset.lpp(KF_linpp, season == seas & type == "FR", select = F); plot(ravens_lpp)
+roadkill_lpp <- subset.lpp(KF_linpp, season == seas & type == "RK", select = F); plot(roadkill_lpp)
+X_F <- data$X_F[[1]]; plot(X_F)
+X_R <- as.linim(distfun.lpp(roadkill_lpp)); plot(X_R)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+We use the `spatstat` model-fitting function `lppm` to generate a model frame from the full (saturated) model:
+```{r}
+m.spat <- lppm(ravens_lpp ~ 1 + X_F + X_R, eps = 15) 
+m.spat %>% model.frame.lppm %>% as_tibble
+```
+
+This generates a numerical quadrature scheme with added 'dummy points', each spaced by eps = 15 units. Each row of the model frame is a single quadrat, where the weight (`(weights)`) denotes the quadrat size (effort) and the response (`.mpl.Y`) is the observed density (0 for a dummy point, 1/weight for an observation). The covariate values are given in the remaining two columns. 
+
+We rename the columns and add a presence/absence transformation of the response which we call `y2` (0 for a dummy point, 1 for an observation). 
+```{r}
+mf <- m.spat %>% model.frame.lppm %>% rename(y1 = .mpl.Y, w = `(weights)`) %>% mutate(y2 = as.numeric(y1>0))
+mf %>% as_tibble
+```
+
+
+## Model fitting
+A Poisson point process is a model of the inhomogenenous intensity function $\lambda=\lambda(x,y)$, with the underlying assumption that events (observations) are independent. The intensity is typically modelled as a log-linear function of selected covariates; for example:
+$$\mbox{log}\,\lambda = \beta_0 + \beta_1X_1 + \beta_2X_2$$
+where $X_k = X_k(x,y),\,\,k =1,2$ are spatial covariates. For an introduction to the theory point process models, we recommend "Spatial point patterns: methodology and applications" by Baddeley, A., Rubak, E. & Turner, R. (2015).
+
+Using a quadrature scheme, a Poisson point process model can be approximated as a glm. Indeed, this is the default method used by `spatstat::lppm`. There are two equivalent ways to specify the glm:  
+1. Use `w` as prior weights with response `y1`  (0 or 1/w)    
+2. Use `log(w)` as an offset with response `y2` (0 or 1)  
+
+### Homogeneous model
+We compare the two glm variants to the `lppm` fit for a (homogeneous) intercept-only model:
+```{r, warning = F}
+m0.lppm <- lppm(ravens_lpp ~ 1, eps = 15)
+m0.glm.1 <- glm(y1 ~ 1, weights = w, family = poisson, data = mf)
+m0.glm.2 <- glm(y2 ~ 1, offset = log(w), family = poisson, data = mf)
+```
+The model `m0.glm.1` throws a 'non-integer' warning for each non-zero observation (here suppressed), but the results are identical for each:
+```{r, warning = F}
+m0.lppm
+m0.glm.1
+m0.glm.2
+```
+
+The **AIC estimate** for the glm `m0.glm.2` is $243.8$ which differs from the `lppm` value
+```{r, warning = F}
+AIC(m0.lppm)
+```
+This is because the dummy points are treated differently to the observation points in the calculation of the latter. A modified calculation is easily implemented for both of the glm variants (see Baddeley et al. 2015, eq(9.56), p347):
+```{r aic1}
+AIC_adj_1 <- function(fit) -2*(-1*(deviance(fit)/2 + sum(log(fit$prior.weights[(fit$y>0)])) + sum(fit$y>0)) - length(coef(fit)))
+AIC_adj_1(m0.glm.1)
+AIC_adj_2 <- function(fit) -2*(-0.5*(deviance(fit) + 2*sum((fit$offset+1)*fit$y)) - length(coef(fit)))
+AIC_adj_2(m0.glm.2)
+```
+However, since the modifications depend only on the weights and the values of response variable, they do not influence model selection provided a fixed quadrature scheme is used for all models. 
+
+For the remainder of these examples, and for all analyses in the manuscript, we use offset form of the glm with the response `y2`.   
+
+### The full model
+We fit the full (heterogeneous) model which includes both of the spatial covariates:
+```{r, warning = F}
+m1.lppm <- lppm(ravens_lpp ~ 1 + X_F + X_R, eps = 15); m1.lppm
+m1.glm <- glm(y2 ~ 1 + X_F + X_R, offset = log(w), family = poisson, data = mf); m1.glm
+AIC(m1.lppm);AIC_adj_2(m1.glm) 
+```
+Model comparison using AIC suggests the full model should be selected over the homogeneous model. 
+
+## Bayesian estimation using `rstan`
+Estimation in a Bayesian framework is straight-forward thanks to `rstan` and the frontend package `rstanarm`. Using the default (weakly-informative) priors, we fit both the intercept and the full model:
+```{r, cache = T, message = F}
+m.stan.0 <- stan_glm(y2~ 1, offset = log(w), family = poisson, data = mf, cores = 4); m.stan.0
+m.stan.1 <- stan_glm(y2~ 1 + X_F + X_R, offset = log(w), family = poisson, data = mf, cores = 4); m.stan.1
+```
+Plots of the marginal posterior distributions are easily generated:
+```{r, cache = T}
+m.stan.1 %>% plot("mcmc_dens")
+```
+
+Model comparison can be performed using approximate leave-one-out cross validation, built into `rstanarm` via the package `loo`. 
+```{r, eval=F}
+loo_c <- loo_compare(loo(m.stan.0, cores = 10),loo(m.stan.1, cores = 10)) 
+```
+```{r, echo=F}
+# manually stored results since loo is slow to run
+matrix(c(0.0,0.0,-6.1,5.4),2,2, byrow = T, dimnames = list(c("m.stan.1","m.stan.0"),c("elpd_diff","se_diff"))) 
+```
+Leave-one-out cross validation, here based on predictive log densities and approximated using importance-sampling methods, is an estimate of the information-theoretic quantity Kullback-Leibler (KL) discrepancy. In this way it is similar to AIC, which is also an estimate of KL discrepancy, although cross validation is a more flexible estimator requiring less assumptions than AIC. Importantly, cross validation can be applied to compare hierarchical models with differing effect structures, providing the full set of group-level parameters are conditioned on to ensure the conditional independence of the test data points. 
+
+---
+
+### Original Computing Environment
+```{r}
+sessionInfo()
+```
+

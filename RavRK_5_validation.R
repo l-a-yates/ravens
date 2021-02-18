@@ -1,17 +1,17 @@
-############################################################
+##---------------------------------------------------------------------------------
 ##
-## 1-D point pattern analysis of Raven and Roadkill data
+## Code to reproduce analyses from the manuscript:
+## “Roadkill islands: carnivore extinction shifts seasonal use of roadside carrion 
+## by generalist avian scavenger” by Fielding, Matthew; Buettel, Jessie C; Brook, 
+## Barry; Stojanović, Dejan; Yates, Luke (2021)
 ##
-## glm models of imhomogeneous linear point patterns
-## Includes fixed and mixed effects models
-## All models estimated via Bayesian MCMC methods (rstanarm)
 ##
 ## This script produces posterior predictive checks / model validation
 ##
 ## Authors: L Yates, M Fielding 
 ## Date: 14/07/2020
 ##
-############################################################
+##---------------------------------------------------------------------------------
 
 library(tidyverse)
 library(ggpubr)

@@ -1,3 +1,20 @@
+##---------------------------------------------------------------------------------
+##
+## Code to reproduce analyses from the manuscript:
+## “Roadkill islands: carnivore extinction shifts seasonal use of roadside carrion 
+## by generalist avian scavenger” by Fielding, Matthew; Buettel, Jessie C; Brook, 
+## Barry; Stojanović, Dejan; Yates, Luke (2021)
+##
+## Re-run selected best model using both longer chains and more chains
+##
+## Produces main results for the manuscript
+#
+## Authors: L Yates, M Fielding 
+## Date: 20/10/2020
+##
+##---------------------------------------------------------------------------------
+
+
 library(tidyverse)
 library(pbmcapply)
 library(ggpubr)

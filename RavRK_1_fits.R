@@ -1,4 +1,9 @@
-############################################################
+##---------------------------------------------------------------------------------
+##
+## Code to reproduce analyses from the manuscript:
+## “Roadkill islands: carnivore extinction shifts seasonal use of roadside carrion 
+## by generalist avian scavenger” by Fielding, Matthew; Buettel, Jessie C; Brook, 
+## Barry; Stojanović, Dejan; Yates, Luke (2021)
 ##
 ## 1-D point pattern analysis of Raven and Roadkill data
 ##
@@ -9,7 +14,7 @@
 ## Authors: L Yates, M Fielding 
 ## Date: 20/10/2020
 ##
-############################################################
+##---------------------------------------------------------------------------------
 
 #library(spatstat)
 library(tidyverse)

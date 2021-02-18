@@ -384,7 +384,8 @@ library(spatstat)
 library(rstanarm)</code></pre>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>Here we provide an informal example of the model fitting process for Poisson point process models. We make use of the package <code>spatstat</code> to generate a quadrature scheme using a small subset of the data from the manuscript. The scheme permits numerical approximation of the model likelihood via generalised linear models. We demonstrate model fitting and model comparison using both maximum-likelihood and Bayesian approaches.</p>
+<p>This page is part of a code repository (<a href="https://github.com/l-a-yates/ravens" class="uri">https://github.com/l-a-yates/ravens</a>) to reproduce the analyses in the manuscript “Roadkill islands: carnivore extinction shifts seasonal use of roadside carrion by generalist avian scavenger” by Fielding, Matthew; Buettel, Jessie C; Brook, Barry; Stojanović, Dejan; Yates, Luke (2021). The data are available from the accompanying repository <a href="https://doi.org/10.6084/m9.figshare.14036807.v1" class="uri">https://doi.org/10.6084/m9.figshare.14036807.v1</a>.</p>
+<p>Here we provide a simple worked example of the model-fitting process for Poisson point-process models. We make use of the package <code>spatstat</code> to generate a quadrature scheme using a small subset of the data from the manuscript. The scheme permits numerical approximation of the model likelihood using a generalised linear model (glm). We demonstrate model fitting and model comparison using both maximum-likelihood and Bayesian approaches. These approaches can be applied to other transect data and point patterns.</p>
 </div>
 <div id="load-and-prepare-data" class="section level2">
 <h2>Load and prepare data</h2>
@@ -429,7 +430,7 @@ m.spat %&gt;% model.frame.lppm %&gt;% as_tibble</code></pre>
 ##  9  0.203  22.4   145.          4.92
 ## 10  0.133  19.3   608.          7.5 
 ## # … with 1,217 more rows</code></pre>
-<p>This generates a numerical quadrature scheme with added ‘dummy points’ spaced by eps = 15 units. Each row of the model frame is a single quadrat, where the weight (<code>(weights)</code>) denotes the quadrat size (effort) and the response (<code>.mpl.Y</code>) is the observed density (0 for a dummy point, 1/weight for an observation). The covariate values are given in the remaining two columns.</p>
+<p>This generates a numerical quadrature scheme with added ‘dummy points’, each spaced by eps = 15 units. Each row of the model frame is a single quadrat, where the weight (<code>(weights)</code>) denotes the quadrat size (effort) and the response (<code>.mpl.Y</code>) is the observed density (0 for a dummy point, 1/weight for an observation). The covariate values are given in the remaining two columns.</p>
 <p>We rename the columns and add a presence/absence transformation of the response which we call <code>y2</code> (0 for a dummy point, 1 for an observation).</p>
 <pre class="r"><code>mf &lt;- m.spat %&gt;% model.frame.lppm %&gt;% rename(y1 = .mpl.Y, w = `(weights)`) %&gt;% mutate(y2 = as.numeric(y1&gt;0))
 mf %&gt;% as_tibble</code></pre>
@@ -450,11 +451,12 @@ mf %&gt;% as_tibble</code></pre>
 </div>
 <div id="model-fitting" class="section level2">
 <h2>Model fitting</h2>
-<p>Poisson point process models can be fit using glms, with canonical log link. Indeed, this is the default method used by <code>spatstat::lppm</code>. Let us verify this. There are two equivalent ways to specify the glm:<br />
+<p>A Poisson point process is a model of the inhomogenenous intensity function <span class="math inline">\(\lambda=\lambda(x,y)\)</span>, with the underlying assumption that events (observations) are independent. The intensity is typically modelled as a log-linear function of selected covariates; for example: <span class="math display">\[\mbox{log}\,\lambda = \beta_0 + \beta_1X_1 + \beta_2X_2\]</span> where <span class="math inline">\(X_k = X_k(x,y),\,\,k =1,2\)</span> are spatial covariates. For an introduction to the theory point process models, we recommend “Spatial point patterns: methodology and applications” by Baddeley, A., Rubak, E. &amp; Turner, R. (2015).</p>
+<p>Using a quadrature scheme, a Poisson point process model can be approximated as a glm. Indeed, this is the default method used by <code>spatstat::lppm</code>. There are two equivalent ways to specify the glm:<br />
 1. Use <code>w</code> as prior weights with response <code>y1</code> (0 or 1/w)<br />
 2. Use <code>log(w)</code> as an offset with response <code>y2</code> (0 or 1)</p>
-<div id="an-intercept-model" class="section level3">
-<h3>An intercept model</h3>
+<div id="homogeneous-model" class="section level3">
+<h3>Homogeneous model</h3>
 <p>We compare the two glm variants to the <code>lppm</code> fit for a (homogeneous) intercept-only model:</p>
 <pre class="r"><code>m0.lppm &lt;- lppm(ravens_lpp ~ 1, eps = 15)
 m0.glm.1 &lt;- glm(y1 ~ 1, weights = w, family = poisson, data = mf)
@@ -495,7 +497,7 @@ m0.glm.2 &lt;- glm(y2 ~ 1, offset = log(w), family = poisson, data = mf)</code><
 <p>The <strong>AIC estimate</strong> for the glm <code>m0.glm.2</code> is <span class="math inline">\(243.8\)</span> which differs from the <code>lppm</code> value</p>
 <pre class="r"><code>AIC(m0.lppm)</code></pre>
 <pre><code>## [1] 397.1998</code></pre>
-<p>This is because the dummy points are treated differently to the observation points in the calculation of the latter. A modified calculation is easily implemented for both of the glm variants (see Baddeley eq(9.56), p347):</p>
+<p>This is because the dummy points are treated differently to the observation points in the calculation of the latter. A modified calculation is easily implemented for both of the glm variants (see Baddeley et al. 2015, eq(9.56), p347):</p>
 <pre class="r"><code>AIC_adj_1 &lt;- function(fit) -2*(-1*(deviance(fit)/2 + sum(log(fit$prior.weights[(fit$y&gt;0)])) + sum(fit$y&gt;0)) - length(coef(fit)))
 AIC_adj_1(m0.glm.1)</code></pre>
 <pre><code>## [1] 397.1998</code></pre>
@@ -503,7 +505,7 @@ AIC_adj_1(m0.glm.1)</code></pre>
 AIC_adj_2(m0.glm.2)</code></pre>
 <pre><code>## [1] 397.1998</code></pre>
 <p>However, since the modifications depend only on the weights and the values of response variable, they do not influence model selection provided a fixed quadrature scheme is used for all models.</p>
-<p>For the remainder of these examples, and for all analyses in the manuscript, we use offset form of the glm with the response $y$2.</p>
+<p>For the remainder of these examples, and for all analyses in the manuscript, we use offset form of the glm with the response <code>y2</code>.</p>
 </div>
 <div id="the-full-model" class="section level3">
 <h3>The full model</h3>
@@ -545,12 +547,12 @@ AIC_adj_2(m0.glm.2)</code></pre>
 <pre class="r"><code>AIC(m1.lppm);AIC_adj_2(m1.glm) </code></pre>
 <pre><code>## [1] 383.492</code></pre>
 <pre><code>## [1] 383.492</code></pre>
-<p>Model comparison using AIC, suggests the full model should be selected over the homogeneous model.</p>
+<p>Model comparison using AIC suggests the full model should be selected over the homogeneous model.</p>
 </div>
 </div>
 <div id="bayesian-estimation-using-rstan" class="section level2">
-<h2>Bayesian estimation using rstan</h2>
-<p>Estimation in a Bayesian framework is straight-forward thanks to <code>rstan</code> and the frontend package <code>rstanarm</code>. Using the default (weakly informative) priors, we fit both the intercept and the full model:</p>
+<h2>Bayesian estimation using <code>rstan</code></h2>
+<p>Estimation in a Bayesian framework is straight-forward thanks to <code>rstan</code> and the frontend package <code>rstanarm</code>. Using the default (weakly-informative) priors, we fit both the intercept and the full model:</p>
 <pre class="r"><code>m.stan.0 &lt;- stan_glm(y2~ 1, offset = log(w), family = poisson, data = mf, cores = 4); m.stan.0</code></pre>
 <pre><code>## stan_glm
 ##  family:       poisson [log]
@@ -587,7 +589,77 @@ AIC_adj_2(m0.glm.2)</code></pre>
 <pre><code>##          elpd_diff se_diff
 ## m.stan.1       0.0     0.0
 ## m.stan.0      -6.1     5.4</code></pre>
-<p>Leave-one-out cross validation, here based on predictive log densities and approximated using importance-sampling methods, is an estimate of the information-theoretic quantity Kullback-Leibler (KL) discrepancy. In this way it is similar to AIC, which is also an estimate of KL discrepancy, although cross validation is a more flexible estimator with less bias and assumptions than AIC. Importantly, cross validation can be applied to compare hierarchical models with differing effect structures, providing the full set of grouping variables and associated estimates are included to maintain the conditional independence of the data points.</p>
+<p>Leave-one-out cross validation, here based on predictive log densities and approximated using importance-sampling methods, is an estimate of the information-theoretic quantity Kullback-Leibler (KL) discrepancy. In this way it is similar to AIC, which is also an estimate of KL discrepancy, although cross validation is a more flexible estimator requiring less assumptions than AIC. Importantly, cross validation can be applied to compare hierarchical models with differing effect structures, providing the full set of group-level parameters are conditioned on to ensure the conditional independence of the test data points.</p>
+<hr />
+<div id="original-computing-environment" class="section level3">
+<h3>Original Computing Environment</h3>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 20.04.2 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.9.0
+## LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.9.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_AU.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_AU.UTF-8        LC_COLLATE=en_AU.UTF-8    
+##  [5] LC_MONETARY=en_AU.UTF-8    LC_MESSAGES=en_AU.UTF-8   
+##  [7] LC_PAPER=en_AU.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_AU.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] rstanarm_2.21.1     Rcpp_1.0.6          spatstat_1.64-1    
+##  [4] rpart_4.1-15        nlme_3.1-151        spatstat.data_1.7-0
+##  [7] forcats_0.5.1       stringr_1.4.0       dplyr_1.0.4        
+## [10] purrr_0.3.4         readr_1.4.0         tidyr_1.1.2        
+## [13] tibble_3.0.6        ggplot2_3.3.3       tidyverse_1.3.0    
+## 
+## loaded via a namespace (and not attached):
+##   [1] minqa_1.2.4           colorspace_2.0-0      deldir_0.2-9         
+##   [4] ellipsis_0.3.1        ggridges_0.5.3        rsconnect_0.8.16     
+##   [7] markdown_1.1          base64enc_0.1-3       fs_1.5.0             
+##  [10] rstudioapi_0.13       rstan_2.21.2          DT_0.17              
+##  [13] fansi_0.4.2           lubridate_1.7.9.2     xml2_1.3.2           
+##  [16] codetools_0.2-18      splines_4.0.4         knitr_1.31           
+##  [19] shinythemes_1.2.0     polyclip_1.10-0       bayesplot_1.8.0      
+##  [22] jsonlite_1.7.2        nloptr_1.2.2.2        broom_0.7.4          
+##  [25] dbplyr_2.1.0          shiny_1.6.0           compiler_4.0.4       
+##  [28] httr_1.4.2            backports_1.2.1       assertthat_0.2.1     
+##  [31] Matrix_1.3-2          fastmap_1.1.0         cli_2.3.0            
+##  [34] later_1.1.0.1         prettyunits_1.1.1     htmltools_0.5.1.1    
+##  [37] tools_4.0.4           igraph_1.2.6          gtable_0.3.0         
+##  [40] glue_1.4.2            reshape2_1.4.4        V8_3.4.0             
+##  [43] cellranger_1.1.0      vctrs_0.3.6           crosstalk_1.1.1      
+##  [46] xfun_0.20             ps_1.5.0              lme4_1.1-26          
+##  [49] rvest_0.3.6           mime_0.10             miniUI_0.1.1.1       
+##  [52] lifecycle_0.2.0       gtools_3.8.2          statmod_1.4.35       
+##  [55] goftest_1.2-2         MASS_7.3-53           zoo_1.8-8            
+##  [58] scales_1.1.1          colourpicker_1.1.0    hms_1.0.0            
+##  [61] promises_1.2.0.1      spatstat.utils_1.20-2 parallel_4.0.4       
+##  [64] inline_0.3.17         shinystan_2.5.0       curl_4.3             
+##  [67] yaml_2.2.1            gridExtra_2.3         loo_2.4.1            
+##  [70] StanHeaders_2.21.0-7  stringi_1.5.3         highr_0.8            
+##  [73] dygraphs_1.1.1.6      boot_1.3-27           pkgbuild_1.2.0       
+##  [76] matrixStats_0.57.0    rlang_0.4.10          pkgconfig_2.0.3      
+##  [79] evaluate_0.14         lattice_0.20-41       tensor_1.5           
+##  [82] rstantools_2.1.1      htmlwidgets_1.5.3     tidyselect_1.1.0     
+##  [85] processx_3.4.5        plyr_1.8.6            magrittr_2.0.1       
+##  [88] R6_2.5.0              generics_0.1.0        DBI_1.1.1            
+##  [91] pillar_1.4.7          haven_2.3.1           withr_2.4.0          
+##  [94] mgcv_1.8-33           xts_0.12.1            survival_3.2-7       
+##  [97] abind_1.4-5           modelr_0.1.8          crayon_1.3.4         
+## [100] utf8_1.1.4            rmarkdown_2.6         grid_4.0.4           
+## [103] readxl_1.3.1          callr_3.5.1           threejs_0.3.3        
+## [106] reprex_1.0.0          digest_0.6.27         xtable_1.8-4         
+## [109] httpuv_1.5.5          RcppParallel_5.0.2    stats4_4.0.4         
+## [112] munsell_0.5.0         shinyjs_2.0.0</code></pre>
+</div>
 </div>
 
 
