@@ -57,11 +57,11 @@ mf %>% as_tibble
 
 
 ## Model fitting
-A Poisson point process is a model of the inhomogenenous intensity function $\lambda=\lambda(x,y)$, with the underlying assumption that events (observations) are independent. The intensity is typically modelled as a log-linear function of selected covariates; for example:
+A Poisson point process is characterised by an inhomogenenous intensity function $\lambda=\lambda(x,y)$, with the underlying assumption that events (observations) are independent. The intensity (Poisson parameter) is typically modelled as a log-linear function of selected covariates; for example:
 $$\mbox{log}\,\lambda = \beta_0 + \beta_1X_1 + \beta_2X_2$$
-where $X_k = X_k(x,y),\,\,k =1,2$ are spatial covariates. For an introduction to the theory point process models, we recommend "Spatial point patterns: methodology and applications" by Baddeley, A., Rubak, E. & Turner, R. (2015).
+where $X_k = X_k(x,y),\,\,k =1,2$ are spatial covariates. For an introduction to the theory of point-process models, we recommend "Spatial point patterns: methodology and applications" by Baddeley, A., Rubak, E. & Turner, R. (2015).
 
-Using a quadrature scheme, a Poisson point process model can be approximated as a glm. Indeed, this is the default method used by `spatstat::lppm`. There are two equivalent ways to specify the glm:  
+Using a quadrature scheme, a Poisson point-process model can be approximated as a glm. Indeed, this is the default method used by `spatstat::lppm`. There are two equivalent ways to specify the glm:  
 1. Use `w` as prior weights with response `y1`  (0 or 1/w)    
 2. Use `log(w)` as an offset with response `y2` (0 or 1)  
 
@@ -90,7 +90,7 @@ AIC_adj_1(m0.glm.1)
 AIC_adj_2 <- function(fit) -2*(-0.5*(deviance(fit) + 2*sum((fit$offset+1)*fit$y)) - length(coef(fit)))
 AIC_adj_2(m0.glm.2)
 ```
-However, since the modifications depend only on the weights and the values of response variable, they do not influence model selection provided a fixed quadrature scheme is used for all models. 
+However, since the modifications to the usual definition of AIC depend only on the weights and the values of response variable, they do not influence model selection provided a fixed quadrature scheme is used for all models. 
 
 For the remainder of these examples, and for all analyses in the manuscript, we use offset form of the glm with the response `y2`.   
 
