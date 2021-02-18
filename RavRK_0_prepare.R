@@ -70,7 +70,7 @@ ravens_hyper <- hyperframe(site = route_names,
                             linpp = obs_lpp,
                             X_F = dist_fun)
 
-saveRDS(ravens_hyper,"data/ravens_hyper_2021_02_03.rds")
+#saveRDS(ravens_hyper,"data/ravens_hyper_2021_02_03.rds")
 
 # create list of 4 hyperframes, by season
 seasons <- c(spring = "spring", summer = "summer", autumn = "autumn", winter = "winter")
