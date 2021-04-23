@@ -47,7 +47,7 @@ m.spat <- lppm(ravens_lpp ~ 1 + X_F + X_R, eps = 15)
 m.spat %>% model.frame.lppm %>% as_tibble
 ```
 
-This generates a numerical quadrature scheme with added 'dummy points', each spaced by eps = 15 units. Each row of the model frame is a single quadrat, where the weight (`(weights)`) denotes the quadrat size (effort) and the response (`.mpl.Y`) is the observed density (0 for a dummy point, 1/weight for an observation). The covariate values are given in the remaining two columns. 
+This generates a numerical quadrature scheme which includes a point for each observation together with added 'dummy points', each spaced by eps = 15 units. The role of the quadrature scheme is to enable numerical evaluation of the model likelihood which involves (numerical) integration of the density function along the length of each route. Within the model frame, each row corresponds to a quadrature point, where the weight (`(weights)`) denotes the length of route associated with the point and the response (`.mpl.Y`) is the density (0 for a dummy point, 1/weight for an observation). The covariate values are given in the remaining two columns. 
 
 We rename the columns and add a presence/absence transformation of the response which we call `y2` (0 for a dummy point, 1 for an observation). 
 ```{r}
@@ -122,7 +122,7 @@ loo_c <- loo_compare(loo(m.stan.0, cores = 10),loo(m.stan.1, cores = 10))
 # manually stored results since loo is slow to run
 matrix(c(0.0,0.0,-6.1,5.4),2,2, byrow = T, dimnames = list(c("m.stan.1","m.stan.0"),c("elpd_diff","se_diff"))) 
 ```
-Leave-one-out cross validation, here based on predictive log densities and approximated using importance-sampling methods, is an estimate of the information-theoretic quantity Kullback-Leibler (KL) discrepancy. In this way it is similar to AIC, which is also an estimate of KL discrepancy, although cross validation is a more flexible estimator requiring less assumptions than AIC. Importantly, cross validation can be applied to compare hierarchical models with differing effect structures, providing the full set of group-level parameters are conditioned on to ensure the conditional independence of the test data points. 
+Leave-one-out cross validation, here based on predictive log densities and approximated using Pareto-smoothed importance-sampling techniques, is an estimate of the information-theoretic quantity Kullback-Leibler (KL) discrepancy. In this way, it is similar to AIC (up to a factor of $-2$), which is also an estimate of KL discrepancy, although cross validation is a more flexible estimator requiring less assumptions than AIC. Importantly, cross validation can be applied to compare hierarchical models with differing effect structures, providing the full set of group-level parameters are conditioned on to ensure the conditional independence of the test data points. 
 
 ---
 

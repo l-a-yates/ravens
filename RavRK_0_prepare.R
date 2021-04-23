@@ -43,7 +43,7 @@ createRoute <- function(route.site, dilation = 1000){
 #------
 
 # route and habitat data
-route_data <- read_csv("data/route_data_2021_02_02.csv")
+route_data <- read_csv("data/route_data_2021_02_03.csv")
 routes <- route_data %>% split(route_data$route)
 linnets <- routes %>% lapply(createRoute)
 
@@ -84,7 +84,7 @@ data <- lapply(seasons, function(seas){
 })
 
 # use spatstat::lppm to fit (full) saturated model
-# this generates a quadrat scheme and corresponding model frame for each route-season pairs (32) 
+# this generates a quadrature scheme and corresponding model frame for each route-season pairs (32) 
 # dummy spacing eps = 15 is equivalent to the default scheme, but has been set explicitly for reproducibility. 
 lppm_fits <- lapply(seasons, function(seas) with(data[[seas]], try(lppm(ravens.lpp, ~ O.dist + RK.dist + 1,eps =15))))
 model_frames <- lapply(lppm_fits, lapply, function(fit) fit %>% model.frame.lppm %>% rename(y = .mpl.Y, w = `(weights)`))

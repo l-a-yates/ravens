@@ -29,12 +29,12 @@ rm(list=ls())
 #-----
 # Data
 #-----
-# ravens data are the combined model matrices from (the default) linear quadrat schemes generated 
-#   for each route using spatstat's lppm (see RavRK_0_prepare.R)
-# Each row is a single quadrat in a given route in a given season 
-# y2: 0 or 1, raven not-observed/observed in quadrat
-# w: weights = 'area' of quadrat (proportional to quadrat length)
-# y1 = y2/w (intensity/rate = observed raven/metre in quadrat)
+# ravens data are the combined model matrices from the (default) linear quadrature schemes generated 
+#   for each route using spatstat's lppm (see RavRK_0_prepare.R).
+# Each row is a single quadrature point in a given route in a given season. 
+# y2: 0 or 1, raven not-observed/observed at the quadrature point.
+# w: weights = 'length' of route associated with the quadrature point
+# y1 = y2/w (intensity (or rate) = observed raven/metre in the length associated with the quadrature point)
 # O.dist (numerical covariate): distance to open farmland from quadrat (X_F)
 # RK.dist (numerical covariate): distance to roadkill from quadrat (X_R)
 # route (group factor): 8 routes where observations were made
@@ -50,7 +50,7 @@ ravensScaled <- ravens %>% mutate(O.dist = scale(O.dist), RK.dist = scale(RK.dis
 #--------------------
 
 # Point process Poisson models can be fit using standard glms, with Poisson errors and canonical log link
-# The quadrat 'sizes' (effort), w,  must incorporated into the fit. 
+# The quadrature 'weights', w,  must incorporated into the fit. 
 # Two methods:
 # 1) Use w as prior weights with response y1 = 1/w or 0 for presence/absence (non-integer counts may throw warnings but estimates are correct)
 # 2) Use log(w) as an offset with response y2 = 1 or 0 presence/absence [we use this]
